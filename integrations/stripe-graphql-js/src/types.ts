@@ -38,6 +38,10 @@ export type StripePaymentIntent = Stripe.PaymentIntent & {
   customer: string
 }
 
+export type StripeCheckoutSession = Stripe.Checkout.Session & {
+  customer: string
+}
+
 export type StripeCharge = Stripe.Charge & {
   customer: string
   payment_intent: string | null

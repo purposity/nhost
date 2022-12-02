@@ -3,10 +3,12 @@ import Stripe from 'stripe'
 import { builder } from '../builder'
 import {
   StripeCharge,
+  StripeCheckoutSession,
   StripeInvoice,
   StripePaymentIntent,
   StripePaymentMethod,
-  StripeSubscription} from '../types'
+  StripeSubscription
+} from '../types'
 import { stripe } from '../utils'
 
 import { StripePaymentMethodTypes } from './payment-methods'
@@ -31,7 +33,7 @@ builder.objectType('StripeCustomer', {
     }),
     // TODO: cash_balance
     created: t.exposeInt('created', {
-      description: `Time at which the object was created. Measured in seconds since the Unix epoch.` 
+      description: `Time at which the object was created. Measured in seconds since the Unix epoch.`
     }),
     currency: t.exposeString('currency', {
       description: `Three-letter [ISO code for the currency](https://stripe.com/docs/currencies) the customer can be charged in for recurring billing purposes.`,
@@ -123,6 +125,40 @@ builder.objectType('StripeCustomer', {
           customer: customer.id
         })
         return paymentIntents as Stripe.Response<Stripe.ApiList<StripePaymentIntent>>
+      }
+    }),
+    checkoutSessions: t.field({
+      type: 'StripeCheckoutSessions',
+      args: {
+        limit: t.arg.int({
+          description:
+            'A limit on the number of objects to be returned. Limit can range between 1 and 100, and the default is 10.',
+          required: false,
+          defaultValue: undefined
+        }),
+        startingAfter: t.arg.string({
+          description:
+            'A cursor for use in pagination. `starting_after` is an object ID that defines your place in the list. For instance, if you make a list request and receive 100 objects, ending with `obj_foo`, your subsequent call can include `starting_after=obj_foo` in order to fetch the next page of the list.',
+          required: false,
+          defaultValue: undefined
+        }),
+        endingBefore: t.arg.string({
+          description:
+            'A cursor for use in pagination. `ending_before` is an object ID that defines your place in the list. For instance, if you make a list request and receive 100 objects, starting with `obj_bar`, your subsequent call can include `ending_before=obj_bar` in order to fetch the previous page of the list.',
+          required: false,
+          defaultValue: undefined
+        })
+      },
+      nullable: false,
+      resolve: async (customer, { endingBefore, limit, startingAfter }) => {
+        const checkoutSessions = await stripe.checkout.sessions.list({
+          customer: customer.id,
+          expand: ['data.line_items'],
+          limit: limit ?? undefined,
+          starting_after: startingAfter ?? undefined,
+          ending_before: endingBefore ?? undefined
+        })
+        return checkoutSessions as Stripe.Response<Stripe.ApiList<StripeCheckoutSession>>
       }
     }),
     paymentMethods: t.field({

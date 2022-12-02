@@ -1,7 +1,7 @@
 import Stripe from 'stripe'
 
 import { builder } from '../builder'
-import { StripeInvoice } from '../types'
+import { StripeInvoice, StripeCheckoutSession } from '../types'
 import { stripe } from '../utils'
 
 builder.objectType('StripePaymentIntent', {
@@ -65,6 +65,22 @@ builder.objectType('StripePaymentIntent', {
         const invoiceData = await stripe.invoices.retrieve(invoice as string)
 
         return invoiceData as Stripe.Response<StripeInvoice>
+      }
+    }),
+    checkoutSession: t.field({
+      type: 'StripeCheckoutSession',
+      nullable: true,
+      resolve: async (paymentIntent) => {
+        const checkoutSessionData = await stripe.checkout.sessions.list({
+          payment_intent: paymentIntent.id,
+          limit: 1
+        })
+
+        if (checkoutSessionData.data.length < 1) {
+          return null
+        }
+
+        return checkoutSessionData.data[0] as Stripe.Response<StripeCheckoutSession>
       }
     })
     // todo: missing fields

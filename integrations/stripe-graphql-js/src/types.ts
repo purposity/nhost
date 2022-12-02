@@ -36,6 +36,7 @@ export type StripeInvoice = Stripe.Invoice & {
 
 export type StripePaymentIntent = Stripe.PaymentIntent & {
   customer: string
+  checkout_session: string | StripeCheckoutSession | null
 }
 
 export type StripeCheckoutSession = Stripe.Checkout.Session & {
